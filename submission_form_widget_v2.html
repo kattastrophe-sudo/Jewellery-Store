@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Submit Jewelry Item</title>
+    <script src="https://docs.getgrist.com/grist-plugin-api.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f9fafb;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .debug-panel {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .debug-panel h3 {
+            margin-bottom: 10px;
+            color: #92400e;
+        }
+
+        .debug-info {
+            background: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        }
+
+        .form-header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .form-subtitle {
+            font-size: 15px;
+            color: #6b7280;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+            padding-bottom: 25px;
+            border-bottom: 2px solid #f3f4f6;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .required {
+            color: #ef4444;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .form-input:focus,
+        .form-select:focus,
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-help {
+            font-size: 13px;
+            color: #6b7280;
+            margin-top: 6px;
+        }
+
+        .price-input-group {
+            position: relative;
+        }
+
+        .price-input-group .dollar-sign {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+            font-weight: 600;
+            color: #9ca3af;
+        }
+
+        .price-input-group input {
+            padding-left: 32px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .live-calculation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .live-calculation.visible {
+            display: block;
+        }
+
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 14px;
+        }
+
+        .calc-value {
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .calc-total {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .calc-total .calc-value {
+            font-size: 24px;
+        }
+
+        .tier-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.visible {
+            display: block;
+        }
+
+        .message.success {
+            background: #d1fae5;
+            border: 2px solid #34d399;
+            color: #065f46;
+        }
+
+        .message.error {
+            background: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .loading {
+            text-align: center;
+            display: none;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .fee-info {
+            background: #f9fafb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Debug Panel (remove after testing) -->
+        <div class="debug-panel" id="debugPanel">
+            <h3>🔧 Debug Info (remove this section after testing)</h3>
+            <div class="debug-info" id="debugInfo">Initializing...</div>
+        </div>
+
+        <!-- Messages -->
+        <div class="message success" id="successMessage">
+            <strong>✅ Success!</strong> Your item has been submitted for approval.
+        </div>
+        <div class="message error" id="errorMessage"></div>
+
+        <!-- Form Card -->
+        <div class="form-card">
+            <div class="form-header">
+                <div class="form-title">🎨 Submit Your Jewelry</div>
+                <div class="form-subtitle">Complete the form to submit your piece</div>
+            </div>
+
+            <form id="submissionForm">
+                <!-- Student Selection -->
+                <div class="form-section">
+                    <div class="section-title">👤 Your Information</div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            Your Name <span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="studentId" required>
+                            <option value="">Select your name...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Item Details -->
+                <div class="form-section">
+                    <div class="section-title">💎 Item Details</div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            Item Name <span class="required">*</span>
+                        </label>
+                        <input type="text" class="form-input" id="itemName" 
+                               placeholder="e.g., Silver ring with moonstone" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Category <span class="required">*</span>
+                        </label>
+                        <select class="form-select" id="category" required>
+                            <option value="">Select category...</option>
+                            <option value="Ring">Ring</option>
+                            <option value="Necklace">Necklace</option>
+                            <option value="Bracelet">Bracelet</option>
+                            <option value="Earrings">Earrings</option>
+                            <option value="Pendant">Pendant</option>
+                            <option value="Brooch">Brooch</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            Materials Used <span class="required">*</span>
+                        </label>
+                        <textarea class="form-textarea" id="materials" 
+                                  placeholder="e.g., Sterling silver, moonstone" required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Size / Dimensions</label>
+                        <input type="text" class="form-input" id="size" 
+                               placeholder="e.g., Ring size 7">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Additional Notes</label>
+                        <textarea class="form-textarea" id="notes" 
+                                  placeholder="Optional notes"></textarea>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="form-section">
+                    <div class="section-title">💰 Pricing</div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">
+                            Sale Price (including tax) <span class="required">*</span>
+                        </label>
+                        <div class="price-input-group">
+                            <span class="dollar-sign">$</span>
+                            <input type="number" class="form-input" id="priceFinal" 
+                                   step="0.01" min="10" placeholder="0.00" required>
+                        </div>
+                        <div class="form-help">What should customers pay? (HST included)</div>
+
+                        <div class="live-calculation" id="liveCalc">
+                            <div class="tier-badge" id="tierBadge"></div>
+                            <div class="calc-row">
+                                <span>Price before tax:</span>
+                                <span class="calc-value" id="calcPreTax">$0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>HST (13%):</span>
+                                <span class="calc-value" id="calcHST">$0.00</span>
+                            </div>
+                            <div class="calc-row">
+                                <span>Store fee:</span>
+                                <span class="calc-value" id="calcFee">$0.00</span>
+                            </div>
+                            <div class="calc-row calc-total">
+                                <span>YOU GET:</span>
+                                <span class="calc-value" id="calcYouGet">$0.00</span>
+                            </div>
+                        </div>
+
+                        <div class="fee-info">
+                            <strong>Fee Structure:</strong><br>
+                            • $0 - $282.50 → 20% store fee<br>
+                            • $282.51 - $565 → 15% store fee<br>
+                            • $565+ → 10% store fee
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <div>Submitting...</div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    Submit for Approval
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const HST_RATE = 0.13;
+        let gristReady = false;
+        let debugLog = [];
+
+        function addDebug(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugLog.push(`[${timestamp}] ${message}`);
+            document.getElementById('debugInfo').innerHTML = debugLog.join('<br>');
+            console.log(message);
+        }
+
+        addDebug('Script started');
+
+        // Initialize Grist
+        grist.ready({
+            requiredAccess: 'full'
+        });
+
+        addDebug('Grist.ready() called');
+
+        grist.onReady(function() {
+            addDebug('✅ Grist connection established');
+            gristReady = true;
+            loadStudents();
+        });
+
+        grist.onRecords(function() {
+            addDebug('onRecords triggered');
+        });
+
+        // Load students
+        async function loadStudents() {
+            addDebug('Loading students...');
+            try {
+                const tables = await grist.docApi.fetchTable('Students');
+                addDebug(`Found ${tables.id.length} students`);
+                
+                const select = document.getElementById('studentId');
+                tables.id.forEach((id, index) => {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    
+                    // Try different name fields
+                    const name = tables.PreferredName?.[index] || 
+                                tables.LegalName?.[index] || 
+                                `Student ${id}`;
+                    const number = tables.StudentNumber?.[index] || '';
+                    
+                    option.textContent = number ? `${name} (${number})` : name;
+                    select.appendChild(option);
+                });
+                
+                addDebug('✅ Students loaded successfully');
+            } catch (error) {
+                addDebug(`❌ Error loading students: ${error.message}`);
+                showError('Could not load student list. Error: ' + error.message);
+            }
+        }
+
+        // Price calculator
+        document.getElementById('priceFinal').addEventListener('input', function() {
+            const finalPrice = parseFloat(this.value);
+            const calcDiv = document.getElementById('liveCalc');
+
+            if (!finalPrice || finalPrice <= 0) {
+                calcDiv.classList.remove('visible');
+                return;
+            }
+
+            const preTax = finalPrice / (1 + HST_RATE);
+            const hstAmount = finalPrice - preTax;
+
+            let feeRate, tierText;
+            if (preTax <= 250) {
+                feeRate = 0.20;
+                tierText = '20% Fee - Standard Tier';
+            } else if (preTax <= 500) {
+                feeRate = 0.15;
+                tierText = '15% Fee - Mid-Range Tier';
+            } else {
+                feeRate = 0.10;
+                tierText = '10% Fee - Premium Tier';
+            }
+
+            const storeFee = preTax * feeRate;
+            const youGet = preTax - storeFee;
+
+            document.getElementById('tierBadge').textContent = tierText;
+            document.getElementById('calcPreTax').textContent = '$' + preTax.toFixed(2);
+            document.getElementById('calcHST').textContent = '$' + hstAmount.toFixed(2);
+            document.getElementById('calcFee').textContent = '-$' + storeFee.toFixed(2);
+            document.getElementById('calcYouGet').textContent = '$' + youGet.toFixed(2);
+
+            calcDiv.classList.add('visible');
+        });
+
+        // Form submission
+        document.getElementById('submissionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            addDebug('Form submitted');
+
+            if (!gristReady) {
+                showError('Grist connection not ready. Please wait and try again.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            
+            submitBtn.disabled = true;
+            loading.classList.add('visible');
+            hideMessages();
+
+            try {
+                const formData = {
+                    StudentID: parseInt(document.getElementById('studentId').value),
+                    ItemName: document.getElementById('itemName').value.trim(),
+                    Category: document.getElementById('category').value,
+                    Materials: document.getElementById('materials').value.trim(),
+                    Size: document.getElementById('size').value.trim() || '',
+                    PriceFinal: parseFloat(document.getElementById('priceFinal').value),
+                    Notes: document.getElementById('notes').value.trim() || '',
+                    Type: 'Store',
+                    Status: 'Pending',
+                    ConsignmentPeriodDays: 90
+                };
+
+                addDebug('Form data: ' + JSON.stringify(formData));
+
+                // Add record
+                await grist.docApi.applyUserActions([
+                    ['AddRecord', 'StoreItems', null, formData]
+                ]);
+
+                addDebug('✅ Record added successfully');
+                
+                loading.classList.remove('visible');
+                showSuccess();
+                
+                // Reset form
+                setTimeout(() => {
+                    this.reset();
+                    document.getElementById('liveCalc').classList.remove('visible');
+                    hideMessages();
+                    submitBtn.disabled = false;
+                }, 3000);
+
+            } catch (error) {
+                addDebug(`❌ Submission error: ${error.message}`);
+                loading.classList.remove('visible');
+                submitBtn.disabled = false;
+                showError('Submission failed: ' + error.message);
+            }
+        });
+
+        function showSuccess() {
+            document.getElementById('successMessage').classList.add('visible');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('visible');
+        }
+
+        function hideMessages() {
+            document.getElementById('successMessage').classList.remove('visible');
+            document.getElementById('errorMessage').classList.remove('visible');
+        }
+
+        addDebug('Script loaded completely');
+    </script>
+</body>
+</html>
